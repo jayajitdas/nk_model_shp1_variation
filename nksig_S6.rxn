@@ -1,0 +1,253 @@
+--- The reactions are written for the Stochastic Simulation Compiler (SSC) developed by 
+--- Lis et al, Bioinformatics (2009) 25(17):2289-2291; doi:10.1093/bioinformatics/btp387 . The software is available for download free of cost 
+--- from the web. This version of the code uses the strict kinetic proof reading scheme.
+ 
+region World box width 1 height 1 depth 1
+subvolume edge 1
+
+
+--- NK Signaling, membrane proximal events
+
+-- Activating receptor ligand interactions
+-- receptor binding unbinding
+
+rxn L:aclig(p#) R:arecp(t#) at kona -> L.p # R.t
+rxn L:aclig(p#1)arecp(t#1,c#,d#) at koffa -> break 1
+
+-- DAP12 assumed to be always bound to the activating receptor
+-- binding-unbinding of Lck/Fyn with DAP12
+
+rxn aclig(p#1)L:arecp(t#1,c#) R:lck(q#) at konl ->  L.c # R.q
+rxn L:aclig(p#1)arecp(t#1,c#2)lck(q#2)  at koffl -> break 2
+
+-- breakdown of complexes when the ligand comes off
+
+rxn L:aclig(p#1)arecp(t#1,c#2,d#)lck(q#2)  at koffa -> break 1;break 2
+rxn L:aclig(p#1)arecp(t#1,c#2,d#3)lck(q#2)z(q#3) at koffa -> break 1; break 2; break 3
+rxn L:aclig(p#1)arecp(t#1,c#,d#3)z(q#3) at koffa -> break 1; break 3
+rxn L:aclig(p#1)arecp(t#1,c#2,d#3)lck(q#2)shp(q#3,r#) at koffa -> break 1; break 2; break 3
+rxn L:aclig(p#1)arecp(t#1,c#2,d#3)lck(q#2)shp(q#3,r#5)vav(r1#5,p="p1") at koffa -> break 1; break 2; break 3; break 5
+
+rxn L:aclig(p#1)arecp(t#1,c#,d#3)shp(q#3,r#) at koffa -> break 1; break 3
+rxn L:aclig(p#1)arecp(t#1,c#,d#3)shp(q#3,r#5)vav(r1#5,p="p1") at koffa -> break 1; break 3; break 5
+
+
+-- ITAM activation by pLck or ppLck
+
+rxn  aclig(p#1)L:arecp(t#1,c#2,y1="p0")lck(q#2,p="p1") at kphs1 -> L.y1="p1"
+rxn  aclig(p#1)L:arecp(t#1,c#2,y1="p1")lck(q#2,p="p1") at kphs1 -> L.y1="p2"
+
+rxn  aclig(p#1)L:arecp(t#1,c#2,y1="p0")lck(q#2,p="p2") at kphs2 -> L.y1="p1"
+rxn  aclig(p#1)L:arecp(t#1,c#2,y1="p1")lck(q#2,p="p2") at kphs2 -> L.y1="p2"
+
+-- ITAM de-activation
+
+rxn L:arecp(d#,y1="p1") at kprecp -> L.y1="p0"
+rxn L:arecp(d#,y1="p2") at kprecp1 -> L.y1="p1"
+rxn L:arecp(d#1,y1="p2")shp(q#1) at kprecp -> L.y1="p1"
+
+
+-- Lck activation
+
+rxn L:lck(p="p1") at kplck -> L.p="p2"
+
+-- Lck deactivation
+
+rxn L:lck(p="p2") at kcd45 -> L.p="p1"
+
+-- SHP recruitment
+
+rxn aclig(p#2)L:arecp(t#2,d#,y1="p1") R:shp(q#,r#) at konshp -> L.d # R.q
+rxn L:aclig(p#2)arecp(t#2,d#1,y1="p1")shp(q#1,r#) at koffshp -> break 1
+rxn L:aclig(p#2)arecp(t#2,d#1,y1="p1")shp(q#1,r#5)vav(r1#5,p="p1") at koffshp ->  break 1; break 5
+
+rxn aclig(p#2)L:arecp(t#2,d#,y1="p2") R:shp(q#,r#) at konshp -> L.d # R.q
+rxn aclig(p#2)L:arecp(t#2,d#1,y1="p2")shp(q#1,r#) at koffshp -> break 1
+rxn aclig(p#2)L:arecp(t#2,d#1,y1="p2")shp(q#1,r#5)vav(r1#5,p="p1") at koffshp -> break 1; break 5
+
+
+-- SHP activation
+
+rxn L:shp(q#_,sp="p0") at kphsshp -> L.sp="p1"
+
+-- SHP deactivation 
+
+rxn L:shp(sp="p1") at kdpshp -> L.sp="p0"
+
+-- ZAP recruitment by ITAMs
+
+rxn L:arecp(t#_,d#,y1="p2") R:z(q#) at konz -> L.d # R.q
+rxn L:arecp(t#_,d#1,y1="p2")z(q#1) at koffz -> break 1
+
+-- ZAP activation by Lck
+
+rxn arecp(d#1,c#2,y1="p2")lck(q#2,p="p1")L:z(q#1,p="p0") at kphsz -> L.p="p1"
+rxn arecp(d#1,c#2,y1="p2")lck(q#2,p="p2")L:z(q#1,p="p0") at kphsz1 -> L.p="p1"
+
+--ZAP deactivation
+
+rxn L:z(p="p1") at kpz -> L.p="p0"
+
+--pZAP activates an adaptor, Vav
+
+rxn L:z(d#,p="p1") R:vav(r#,p="p0") at konvav -> L.d # R.r
+rxn L:z(d#1,p="p1")vav(r#1,p="p0") at koffvav -> break 1
+rxn L:z(d#1,p="p0")vav(r#1,p="p0") at koffvav -> break 1
+
+--VAV activation
+rxn z(d#1,p="p1")L:vav(r#1,p="p0") at kfvav -> L.p="p1";break 1
+
+--VAV de-activation (bare)
+
+rxn L:vav(r#,r1#,p="p1") at kpvav -> L.p="p0"
+
+--pSHP binding-unbinding to VAV
+
+rxn L:shp(q#_,r#) R:vav(r1#,p="p1") at konshp -> L.r # R.r1
+rxn L:shp(q#_,r#5)vav(r1#5,p="p1") at koffshp -> break 5
+
+
+--VAV de-activation
+
+rxn shp(q#_,r#5,sp="p0")L:vav(r1#5,p="p1") at kpshp -> L.p="p0"; break 5
+rxn shp(q#_,r#5,sp="p1")L:vav(r1#5,p="p1") at kpshp1 -> L.p="p0"; break 5
+
+
+-- Erk activation through an ultra-sensitive cascade using VAV as an enzyme (approx scheme)----
+
+-- pvav  bining-unbinding to Erk
+
+rxn L:vav(r1#,q#,p="p1") R:erk(d#,p="p0") at kone -> L.q # R.d
+rxn L:vav(q#1,p="p1")erk(d#1,p="p0") at koffe -> break 1
+rxn L:vav(q#1,p="p0")erk(d#1,p="p0") at koffe -> break 1
+
+-- Erk activation
+
+rxn vav(q#1,p="p1")L:erk(d#1,p="p0") at kfe -> L.p="p1";break 1
+
+-- Phosphatase binding-unbiding to Erk
+
+rxn L:w(q#) R:erk(d#,p="p1") at konw -> L.q # R.d
+rxn L:w(q#1)erk(d#1,p="p1") at koffw -> break 1
+
+-- deactivation of pErk
+
+rxn w(q#1)L:erk(d#1,p="p1") at kfw -> L.p="p0";break 1
+
+
+-- S6 activation by pErk
+
+rxn L:erk(d#,p="p1") R:S6(r#,p="p0") at kons6 -> L.d # R.r
+rxn L:erk(d#1,p="p1")S6(r#1,p="p0") at koffs6 -> break 1
+rxn erk(d#1,p="p1")L:S6(r#1,p="p0") at kfs6 -> L.p="p1"; break 1
+
+-- S6 de-activation by a first order reaction
+
+rxn L:S6(p="p1") at kps6 -> L.p="p0"
+
+----------------------------------------------------------
+-- Signaling through inhibitory receptors
+-- receptor binding unbinding
+
+rxn L:inlig(p#) R:irecp(t#) at koni -> L.p # R.t
+rxn L:inlig(p#1)irecp(t#1,c#,d#) at koffi -> break 1
+
+-- binding-unbinding of Lck/Fyn with the recepors
+
+rxn inlig(p#1)L:irecp(t#1,c#) R:lck(q#) at konl ->  L.c # R.q
+rxn L:inlig(p#1)irecp(t#1,c#2)lck(q#2)  at koffl -> break 2
+
+rxn L:inlig(p#1)irecp(t#1,c#2,d#)lck(q#2)  at koffi -> break 2;break 1
+rxn L:inlig(p#1)irecp(t#1,c#2,d#3)lck(q#2)shp(q#3,r#)  at koffi -> break 1; break 2; break 3
+rxn L:inlig(p#1)irecp(t#1,c#2,d#3)lck(q#2)shp(q#3,r#5)vav(r1#5,p="p1")  at koffi -> break 1; break 2; break 3; break 5
+
+rxn L:inlig(p#1)irecp(t#1,c#,d#3)shp(q#3,r#)  at koffi -> break 1; break 3
+rxn L:inlig(p#1)irecp(t#1,c#,d#3)shp(q#3,r#5)vav(r1#5,p="p1") at koffi -> break 1; break 3; break 5
+
+
+
+-- ITIM activation by pLck or ppLck
+
+rxn  inlig(p#1)L:irecp(t#1,c#2,y1="p0")lck(q#2,p="p1") at kphs1 -> L.y1="p1"
+rxn  inlig(p#1)L:irecp(t#1,c#2,y1="p0")lck(q#2,p="p2") at kphs2 -> L.y1="p1"
+
+
+
+-- ITIM de-activation
+
+rxn L:irecp(d#,y1="p1") at kpir -> L.y1="p0"
+
+
+-- SHP recruitment
+
+rxn L:irecp(t#_,d#,y1="p1") R:shp(q#,r#) at konshp -> L.d # R.q
+rxn L:irecp(t#_,d#1,y1="p1")shp(q#1,r#) at koffshp ->  break 1
+rxn L:irecp(t#_,d#1,y1="p1")shp(q#1,r#5)vav(r1#5,p="p1") at koffshp ->  break 1; break 5
+
+  
+
+--------------------------------------concentrations ------------
+
+new aclig at denalig
+new arecp(y1="p0") at denarcp
+new arecp(y1="p1") at denrcpp
+new arecp(y1="p2") at denrcppp
+new lck(p="p1") at denlckp
+new lck(p="p2") at denlckpp
+new shp(sp="p0") at denshp
+new shp(sp="p1") at denshpp
+new z(p="p0") at denzap
+new z(p="p1") at denzapp
+new vav(p="p0") at denvav
+new vav(p="p1") at denvavp
+new inlig at denilig
+new irecp(y1="p0") at denircp
+new irecp(y1="p1") at denircpp
+new erk(p="p0") at denerk
+new erk(p="p1") at denperk
+new w at denw
+new S6(p="p0") at denS6
+new S6(p="p1") at denpS6
+
+---- record species -------------------
+
+record arecp(y1="p2")
+record arecp(y1="p1")
+record arecp(y1="p0")
+--4
+record lck(p="p2")
+record lck(p="p1")
+--6
+record z(p="p1")
+record z(d#,p="p1")
+record z(d#1,p="p1")vav(r#1,p="p0")
+record arecp(d#,y1="p2")
+--10
+record shp(q#_,sp="p1") 
+record shp(sp="p0")
+record irecp(y1="p1")
+record irecp(y1="p0")
+--14
+record arecp(d#1,y1="p2")z(q#1)
+record shp(q#1) arecp(d#1,y1="p1")
+record shp(q#1) arecp(d#1,y1="p2")
+--17
+record shp(q#_)
+record shp(q#_,r#3,sp="p1")vav(r1#3)
+--record shp(q#,r#_,sp="p1")
+--record shp(q#,r#_,sp="p0")
+record inlig(p#1)irecp(t#1)
+record irecp(d#1,y1="p1")shp(q#1)
+--21
+record vav(p="p1")
+record vav(q#,r1#,p="p1")
+record vav(r1#,p="p1")
+record vav(r1#,p="p1")
+--25
+record erk(d#,p="p1") 
+record erk(p="p1") 
+--27
+record S6(p="p1") 
+record S6(r#,p="p1") 
+record S6(p="p0") 
+  
